@@ -25,21 +25,21 @@ jobs:
       run: |
         scp -o StrictHostKeyChecking=no -r $GITHUB_WORKSPACE/* ubuntu@${{ secrets.EC2_PUBLIC_IP }}:~/flask-app/
 
-    # 4️⃣ Build & Run Docker on EC2
+    # 4️⃣ Build & Run Docker on EC2 using sudo
     - name: Deploy on EC2
       run: |
         ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
           cd ~/flask-app
 
           # Stop & remove old container if exists
-          docker ps -q --filter "name=flask-app" | grep -q . && docker stop flask-app || true
-          docker ps -aq --filter "name=flask-app" | grep -q . && docker rm flask-app || true
+          sudo docker ps -q --filter "name=flask-app" | grep -q . && sudo docker stop flask-app || true
+          sudo docker ps -aq --filter "name=flask-app" | grep -q . && sudo docker rm flask-app || true
 
           # Build new image
-          docker build -t flask-app .
+          sudo docker build -t flask-app .
 
           # Run container
-          docker run -d -p 80:5000 \
+          sudo docker run -d -p 80:5000 \
             --name flask-app \
             --restart always \
             -e GEMINI_API_KEY=${GEMINI_API_KEY} \
