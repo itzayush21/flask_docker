@@ -3,7 +3,7 @@ name: CI/CD Docker Deploy Flask to EC2
 on:
   push:
     branches:
-      - main  # deploy on push to main
+      - master  # deploy on push to main
 
 jobs:
   deploy:
