@@ -3,7 +3,7 @@ name: CI/CD Docker Deploy Flask to EC2
 on:
   push:
     branches:
-      - master  # deploy on push to main
+      - master  # deploy on push to master
 
 jobs:
   deploy:
@@ -20,31 +20,30 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-    # 3️⃣ Deploy to EC2
-    - name: Build and Deploy Docker on EC2
+    # 3️⃣ Copy files to EC2
+    - name: Copy project to EC2
       run: |
-        ssh -o StrictHostKeyChecking=no ubuntu@{{ secrets.EC2_PUBLIC_IP }} "
-          # Create deployment folder if not exists
-          mkdir -p ~/flask-app
+        scp -o StrictHostKeyChecking=no -r $GITHUB_WORKSPACE/* ubuntu@${{ secrets.EC2_PUBLIC_IP }}:~/flask-app/
+
+    # 4️⃣ Build & Run Docker on EC2
+    - name: Deploy on EC2
+      run: |
+        ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
           cd ~/flask-app
 
-          # Clean previous files
-          rm -rf ./*
-
-          # Copy repo files from local Actions runner to EC2
-          scp -o StrictHostKeyChecking=no -r $GITHUB_WORKSPACE/* ubuntu@{{ secrets.EC2_PUBLIC_IP }}:~/flask-app/
-
           # Stop & remove old container if exists
-          docker ps -q --filter 'name=flask-app' | grep -q . && docker stop flask-app || true
-          docker ps -aq --filter 'name=flask-app' | grep -q . && docker rm flask-app || true
+          docker ps -q --filter "name=flask-app" | grep -q . && docker stop flask-app || true
+          docker ps -aq --filter "name=flask-app" | grep -q . && docker rm flask-app || true
 
-          # Build Docker image
+          # Build new image
           docker build -t flask-app .
 
-          # Run container with secrets & auto-restart
+          # Run container
           docker run -d -p 80:5000 \
             --name flask-app \
             --restart always \
-            -e GEMINI_API_KEY='${{ secrets.GEMINI_API_KEY }}' \
+            -e GEMINI_API_KEY=${GEMINI_API_KEY} \
             flask-app
-        "
+        EOF
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
