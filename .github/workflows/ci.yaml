@@ -23,7 +23,7 @@ jobs:
     # 3️⃣ Deploy to EC2
     - name: Build and Deploy Docker on EC2
       run: |
-        ssh -o StrictHostKeyChecking=no ubuntu@<EC2_PUBLIC_IP> "
+        ssh -o StrictHostKeyChecking=no ubuntu@{{ secrets.EC2_PUBLIC_IP }} "
           # Create deployment folder if not exists
           mkdir -p ~/flask-app
           cd ~/flask-app
@@ -32,7 +32,7 @@ jobs:
           rm -rf ./*
 
           # Copy repo files from local Actions runner to EC2
-          scp -o StrictHostKeyChecking=no -r $GITHUB_WORKSPACE/* ubuntu@<EC2_PUBLIC_IP>:~/flask-app/
+          scp -o StrictHostKeyChecking=no -r $GITHUB_WORKSPACE/* ubuntu@{{ secrets.EC2_PUBLIC_IP }}:~/flask-app/
 
           # Stop & remove old container if exists
           docker ps -q --filter 'name=flask-app' | grep -q . && docker stop flask-app || true
