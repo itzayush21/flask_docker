@@ -10,6 +10,7 @@ API_KEY = os.getenv("GEMINI_API_KEY", "not-set")
 def generate():
     return jsonify({
         "message": "Flask generate endpoint working!",
+        "prompt": "Hello, World!",
         "api_key": API_KEY
     })
 
